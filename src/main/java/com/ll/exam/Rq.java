@@ -4,7 +4,6 @@ import jakarta.servlet.RequestDispatcher;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 
@@ -49,7 +48,7 @@ public class Rq {
         }
     }
 
-    public void appendBody(String str) {
+    public void print(String str) {
         try {
             resp.getWriter().append(str);
         } catch (IOException e) {
@@ -57,12 +56,15 @@ public class Rq {
         }
     }
 
+    public void println(String str){
+        print(str + "\n");
+    }
+
     public void setAttr(String name, Object value) {
         req.setAttribute(name, value);
     }
 
     public void view(String path) {
-        // gugudan2.jsp 에게 나머지 작업을 토스
         RequestDispatcher requestDispatcher = req.getRequestDispatcher("/jsp/" + path + ".jsp");
         try {
             requestDispatcher.forward(req, resp);
@@ -77,7 +79,77 @@ public class Rq {
         return req.getRequestURI();
     }
 
-    public String getMethod() {
+    public String getActionPath() {
+        String[] bits = req.getRequestURI().split("/");
+
+        return "/%s/%s/%s".formatted(bits[1], bits[2], bits[3]);
+    }
+
+    public String getRouteMethod() {
+        String method = getParam("_method", "");
+
+        if (method.length() > 0 ) {
+            return method.toUpperCase();
+        }
+
         return req.getMethod();
+    }
+
+
+    public long getLongPathValueByIndex(int index, int defaultValue) {
+        String value = getPathValueByIndex(index, null);
+
+        if (value == null) {
+            return defaultValue;
+        }
+
+        try {
+            return Long.parseLong(value);
+        }
+        catch (NumberFormatException e) {
+            return defaultValue;
+        }
+    }
+
+    public String getPathValueByIndex(int index, String defaultValue) {
+        String[] bits = req.getRequestURI().split("/");
+
+        try {
+            return bits[4 + index];
+        } catch (ArrayIndexOutOfBoundsException e) {
+            return defaultValue;
+        }
+    }
+
+    public void replace(String uri, String msg) {
+        if (msg != null && msg.trim().length() > 0) {
+            println("""
+                     <script>
+                     alert("%s");
+                     </script>
+                     """.formatted(msg));
+        }
+
+        println("""
+                 <script>
+                 location.replace("%s");
+                 </script>
+                 """.formatted(uri));
+    }
+
+    public void historyBack(String msg) {
+        if (msg != null && msg.trim().length() > 0) {
+            println("""
+                     <script>
+                     alert("%s");
+                     </script>
+                     """.formatted(msg));
+        }
+
+        println("""
+                 <script>
+                 history.back();
+                 </script>
+                 """);
     }
 }
